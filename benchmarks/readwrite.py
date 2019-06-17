@@ -26,7 +26,8 @@ import numpy as np
 
 from .utils import (
     get_anndata_memsize,
-    sedate
+    sedate,
+    get_peak_mem
 )
 
 import anndata
@@ -62,7 +63,7 @@ class H5ADReadSuite:
             interval=.001
         )
         adata = anndata.read_h5ad(self.filepath)
-        base_size = get_anndata_memsize(adata)
+        base_size = mem_recording[-1] - mem_recording[0]
         print(np.max(mem_recording) - np.min(mem_recording))
         print(base_size)
         return (np.max(mem_recording) - np.min(mem_recording)) / base_size
@@ -75,7 +76,16 @@ class H5ADWriteSuite:
     param_names = ["input_path"]
 
     def setup(self, input_path):
-        self.adata = anndata.read_h5ad(input_path)
+        mem_recording, adata = memory_usage(
+            (
+                sedate(anndata.read_h5ad, .005),
+                (input_path,)
+            ),
+            retval=True,
+            interval=.001
+        )
+        self.adata = adata
+        self.base_size = mem_recording[-1] - mem_recording[0]
         self.tmpdir = tempfile.TemporaryDirectory()
         self.writepth = Path(self.tmpdir.name) / "out.h5ad"
 
@@ -88,8 +98,14 @@ class H5ADWriteSuite:
     def peakmem_write_full(self, input_path):
         self.adata.write_h5ad(self.writepth)
 
+    def track_peakmem_write_full(self, input_path):
+        return get_peak_mem((sedate(self.adata.write_h5ad), (self.writepth,)))
+
     def time_write_compressed(self, input_path):
         self.adata.write_h5ad(self.writepth, compression="gzip")
 
     def peakmem_write_compressed(self, input_path):
         self.adata.write_h5ad(self.writepth, compression="gzip")
+
+    def track_peakmem_write_compressed(self, input_path):
+        return get_peak_mem((sedate(self.adata.write_h5ad), (self.writepth,), {"compression": "gzip"}))

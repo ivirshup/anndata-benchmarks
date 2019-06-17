@@ -16,6 +16,11 @@ def get_anndata_memsize(adata):
     return diff
 
 
+def get_peak_mem(op, interval=0.001):
+    recording = memory_usage(op, interval=interval)
+    return np.max(recording) - np.min(recording)
+
+
 def sedate(func, naplength=0.05):
     """Make a function sleepy, so we can sample the start and end state.
     """
