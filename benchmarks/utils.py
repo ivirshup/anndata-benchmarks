@@ -52,6 +52,12 @@ def gen_indexer(adata, dim, index_kind, ratio):
         a = np.zeros(axis_size, dtype=bool)
         a[pos] = True
         subset[axis] = a
+    elif index_kind == "strarray":
+        subset[axis] = np.random.choice(
+            getattr(adata, dim).index,
+            int(np.round(axis_size * ratio)),
+            replace=False
+        )
     else:
         raise ValueError()
     return tuple(subset)

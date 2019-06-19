@@ -60,11 +60,11 @@ class SubsetMemorySuite:
 # This is split off from the previous so we don't time index generation, I think this isn't as big an issue for memory usage
 class SubsetTimingSuite:
     params = (
-        [100],  # [100, 1000],
-        [100],  # [100, 1000],
+        [100, 1000],
+        [100, 1000],
         ["X-csr", "X-dense", "obs,var"],
         ["obs", "var"],
-        ["intarray", "boolarray", "slice"]
+        ["intarray", "boolarray", "slice", "strarray"]
     )
     param_names = ["n_obs", "n_var", "attr_set", "subset_dim", "index_kind"]
 
