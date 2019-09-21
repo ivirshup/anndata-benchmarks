@@ -57,6 +57,9 @@ class SubsetMemorySuite:
         return (np.max(mem_recording) - np.min(mem_recording)) / base_size
 
 
+# TODO: Add test for 1 cell
+# TODO: Test subseting csc
+# TODO: Add case for backed
 # This is split off from the previous so we don't time index generation, I think this isn't as big an issue for memory usage
 class SubsetTimingSuite:
     params = (
@@ -75,3 +78,9 @@ class SubsetTimingSuite:
 
     def time_subset(self, n_obs, n_var, attr_set, subset_dim, index_kind):
         v = self.adata[self.subset]
+
+    def time_subset_X(self, n_obs, n_var, attr_set, subset_dim, index_kind):
+        Xv = self.adata[self.subset].X
+
+    def time_copy_subset(self, n_obs, n_var, attr_set, subset_dim, index_kind):
+        c = self.adata[self.subset].copy()

@@ -68,6 +68,12 @@ class H5ADReadSuite:
         print(base_size)
         return (np.max(mem_recording) - np.min(mem_recording)) / base_size
 
+    def peakmem_read_backed(self, input_path):
+        anndata.read_h5ad(self.filepath, backed="r")
+
+    def mem_read_backed_object(self, input_path):
+        return anndata.read_h5ad(self.filepath, backed="r")
+
 
 class H5ADWriteSuite:
     params = (
@@ -109,3 +115,25 @@ class H5ADWriteSuite:
 
     def track_peakmem_write_compressed(self, input_path):
         return get_peak_mem((sedate(self.adata.write_h5ad), (self.writepth,), {"compression": "gzip"}))
+
+
+class H5ADBackedWriteSuite(H5ADWriteSuite):
+    params = (
+        [PBMC_REDUCED_PATH, PBMC_3K_PATH]
+    )
+    param_names = ["input_path"]
+
+    def setup(self, input_path):
+        mem_recording, adata = memory_usage(
+            (
+                sedate(anndata.read_h5ad, .005),
+                (input_path,),
+                {"backed": "r"}
+            ),
+            retval=True,
+            interval=.001
+        )
+        self.adata = adata
+        self.base_size = mem_recording[-1] - mem_recording[0]
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.writepth = Path(self.tmpdir.name) / "out.h5ad"
