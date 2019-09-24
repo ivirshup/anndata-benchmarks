@@ -34,6 +34,8 @@ import anndata
 
 PBMC_REDUCED_PATH = "/Users/isaac/github/scanpy/scanpy/datasets/10x_pbmc68k_reduced.h5ad"
 PBMC_3K_PATH = "/Users/isaac/data/pbmc3k_raw.h5ad"
+BM_43K_CSR_PATH = Path(__file__).parent.parent / "datasets/BM2_43k-cells.h5ad"
+BM_43K_CSC_PATH = Path(__file__).parent.parent / "datasets/BM2_43k-cells_CSC.h5ad"
 
 
 class H5ADReadSuite:
@@ -137,3 +139,29 @@ class H5ADBackedWriteSuite(H5ADWriteSuite):
         self.base_size = mem_recording[-1] - mem_recording[0]
         self.tmpdir = tempfile.TemporaryDirectory()
         self.writepth = Path(self.tmpdir.name) / "out.h5ad"
+
+
+class WriteSparseAsDense:
+    params = (
+        [PBMC_3K_PATH, BM_43K_CSR_PATH, BM_43K_CSC_PATH],
+        [False, "r"],
+    )
+    param_names = ["input_path", "backed"]
+
+    def setup(self, input_path, backed):
+        self.adata = anndata.read_h5ad(input_path, backed=backed)
+
+    def peakmem_write(self, input_path, backed):
+        self.adata.write_h5ad("./dense.h5ad", force_dense=True)
+
+    def time_write(self, input_path, backed):
+        self.adata.write_h5ad("./dense.h5ad", force_dense=True)
+
+
+class BackedAccess:
+    params = (
+        [PBMC_3K_PATH, BM_43K_CSR_PATH, BM_43K_CSC_PATH]
+    )
+
+    def setup(self, input_path, backed):
+        self.adata = anndata.read_h5ad(input_path, backed=backed)
