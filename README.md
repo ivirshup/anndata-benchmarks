@@ -69,8 +69,10 @@ All benchmarks:
 
 You can view the benchmarks in the browser with `asv publish` followed by `asv preview`. If you want to include benchmarks of a local branch, I think you'll have to add that branch to the `"branches"` list in `asv.conf.json`.
 
-## Stuff I need to figure out
+## TODO:
 
-* What is the relevant measure of memory for us?
-* What is the right size of data for the benchmarks?
-* Make sure other people can run these, i.e. make sure they can get the data.
+* What's the right way to measure memory usage?
+* Choose datasets to use for benchmarks
+* Write script which downloads and prepares datasets to benchmark on
+* Add script to select which commits to run benchmarks at
+* More benchmarks
