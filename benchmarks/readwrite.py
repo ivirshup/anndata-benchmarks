@@ -20,6 +20,7 @@ Also interesting:
 """
 import tempfile
 from pathlib import Path
+import pickle
 
 from memory_profiler import memory_usage
 import numpy as np
@@ -157,6 +158,84 @@ class WriteSparseAsDense:
     def time_write(self, input_path, backed):
         self.adata.write_h5ad("./dense.h5ad", force_dense=True)
 
+
+class ReadBackedSparse:
+    timeout = 300
+
+    params = (
+        [PBMC_3K_PATH, BM_43K_CSR_PATH, BM_43K_CSC_PATH],
+    )
+    param_names = ["input_path"]
+
+    def setup_cache(self):
+        cur_path = Path(".")
+        local_files = {}
+        rows = {}
+        cols = {}
+        orig_paths = self.params[0]
+        for orig in orig_paths:
+            new = cur_path / Path(orig).stem
+            adata = anndata.read_h5ad(orig)
+            justX = anndata.AnnData(X=adata.X)
+            justX.write_h5ad(new)
+            local_files[orig] = new
+            rs = np.random.RandomState(seed=42)
+            rows[orig] = rs.choice(adata.shape[0], 100, replace=False)
+            cols[orig] = rs.choice(adata.shape[1], 100, replace=False)
+        with open("settings.pkl", "wb") as f:
+            pickle.dump((local_files, rows, cols), f)
+
+    def setup(self, input_path):
+        with open("settings.pkl", "rb") as f:
+            local_files, rows, cols = pickle.load(f)
+        self.local_file = local_files[input_path]
+        self.rows = rows[input_path]
+        self.cols = cols[input_path]
+        self.adata = anndata.read_h5ad(self.local_file, backed="r")
+
+    def time_read_full_row(self, input_path):
+        for row in self.rows:
+            result = self.adata[row, :].X
+
+    def peakmem_read_full_row(self, input_path):
+        for row in self.rows:
+            result = self.adata[row, :].X
+
+    def time_read_full_col(self, input_path):
+        for col in self.cols:
+            result = self.adata[:, col].X
+
+    def peakmem_read_full_col(self, input_path):
+        for col in self.cols:
+            result = self.adata[:, col].X
+
+    def time_read_many_rows(self, input_path):
+        result = self.adata[self.rows, :].X
+
+    def peakmem_read_many_rows(self, input_path):
+        result = self.adata[self.rows, :].X
+
+    def time_read_many_rows_slice(self, input_path):
+        start = self.rows[0]
+        result = self.adata[start:start+100:2, :].X
+
+    def peakmem_read_many_rows_slice(self, input_path):
+        start = self.rows[0]
+        result = self.adata[start:start+100:2, :].X
+
+    def time_read_many_cols(self, input_path):
+        result = self.adata[:, self.cols].X
+
+    def peakmem_read_many_cols(self, input_path):
+        result = self.adata[:, self.cols].X
+
+    def time_read_many_cols_slice(self, input_path):
+        start = self.cols[0]
+        result = self.adata[:, start:start+100:2].X
+
+    def peakmem_read_many_cols_slice(self, input_path):
+        start = self.cols[0]
+        result = self.adata[:, start:start+100:2].X
 
 class BackedAccess:
     params = (
