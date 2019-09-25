@@ -30,7 +30,7 @@
 
     // List of branches to benchmark. If not provided, defaults to "master"
     // (for git) or "default" (for mercurial).
-    "branches": ["master", "views-of-views", "speedup-index-test"], // for git
+    "branches": ["master"], // for git
     // "branches": ["default"],    // for mercurial
 
     // The DVCS being used.  If not set, it will be automatically
@@ -73,12 +73,13 @@
     //
     "matrix": {
         "numpy": [""],
-        "scipy": [""],
+        "scipy": ["1.2", ""],
         "h5py": [""],
         "natsort": [""],
         "pandas": [""],
         "memory_profiler": [""],
-        "zarr": [""]
+        "zarr": [""],
+        "setuptools_scm": [""]
         // "scanpy": [""],
         // "psutil": [""]
     },
