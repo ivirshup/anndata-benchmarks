@@ -17,6 +17,7 @@ Also interesting:
 
 * io for views
 * io for backed objects
+* Reading dense as sparse, writing sparse as dense
 """
 import tempfile
 from pathlib import Path
@@ -143,6 +144,8 @@ class H5ADBackedWriteSuite(H5ADWriteSuite):
 
 
 class WriteSparseAsDense:
+    timeout = 300
+
     params = (
         [PBMC_3K_PATH, BM_43K_CSR_PATH, BM_43K_CSC_PATH],
         [False, "r"],
@@ -236,11 +239,3 @@ class ReadBackedSparse:
     def peakmem_read_many_cols_slice(self, input_path):
         start = self.cols[0]
         result = self.adata[:, start:start+100:2].X
-
-class BackedAccess:
-    params = (
-        [PBMC_3K_PATH, BM_43K_CSR_PATH, BM_43K_CSC_PATH]
-    )
-
-    def setup(self, input_path, backed):
-        self.adata = anndata.read_h5ad(input_path, backed=backed)
