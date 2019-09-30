@@ -151,18 +151,38 @@ class WriteSparseAsDense:
     timeout = 300
 
     params = (
-        [PBMC_3K_PATH, BM_43K_CSR_PATH, BM_43K_CSC_PATH],
+        datasets.list_available(),
+        ["csc", "csr"],
         [False, "r"],
     )
-    param_names = ["input_path", "backed"]
+    param_names = ["dataset", "mtx_format", "backed"]
 
-    def setup(self, input_path, backed):
-        self.adata = anndata.read_h5ad(input_path, backed=backed)
+    def setup_cache(self):
+        base_path = Path(".")
+        fmt_map = {
+            "csc": sparse.csc_matrix,
+            "csr": sparse.csr_matrix
+        }
+        cache_map = {}
+        for dataset in self.params[0]:
+            orig = dataset.load()
+            for mtx_format in self.params[1]:
+                cur = orig.copy()
+                cur_path = base_path / f"{dataset.name}_{mtx_format}.h5ad"
+                cur.X = fmt_map[mtx_format](orig.X)
+                cur.write_h5ad(cur_path)
+                cache_map[(dataset.name, mtx_format)] = cur_path
+        pd.to_pickle(cache_map, "cache_map.pkl")
 
-    def peakmem_write(self, input_path, backed):
+    def setup(self, dataset, mtx_format, backed):
+        cache_map = pd.read_pickle("cache_map.pkl")
+        file_path = cache_map[(dataset.name, mtx_format)]
+        self.adata = anndata.read_h5ad(file_path, backed=backed)
+
+    def peakmem_write(self, dataset, mtx_format, backed):
         self.adata.write_h5ad("./dense.h5ad", force_dense=True)
 
-    def time_write(self, input_path, backed):
+    def time_write(self, dataset, mtx_format, backed):
         self.adata.write_h5ad("./dense.h5ad", force_dense=True)
 
 
