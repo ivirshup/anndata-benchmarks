@@ -5,8 +5,7 @@ import h5py
 import pandas as pd
 from scipy import sparse
 
-from .utils import download, save_sparse, load_sparse
-from .core import Dataset
+from .utils import Dataset, download, save_sparse, load_sparse
 
 DATASETS_PATH = Path(__file__).parent
 BM_PATH = DATASETS_PATH / "data/raw/ica_bone_marrow_h5.h5"
@@ -15,7 +14,7 @@ BM_PATH = DATASETS_PATH / "data/raw/ica_bone_marrow_h5.h5"
 def fetch_bonemarrow():
     download(
         "https://s3.amazonaws.com/preview-ica-expression-data/ica_bone_marrow_h5.h5",
-        BM_PATH
+        BM_PATH,
     )
 
 
@@ -29,7 +28,6 @@ class ICA_BoneMarrow_full(Dataset):
         obs = pd.read_pickle(cls.dirpth / "obs.pkl.gz")
         var = pd.read_pickle(cls.dirpth / "var.pkl.gz")
         adata = ad.AnnData(X=mtx, obs=obs, var=var)
-        # adata.var_names_make_unique()
         return adata
 
     def setup(cls):
@@ -43,17 +41,16 @@ class ICA_BoneMarrow_full(Dataset):
                 cls.dirpth / "mtx.h5",
                 sparse.csr_matrix(
                     (g["data"][:], g["indices"][:], g["indptr"][:]),
-                    shape=g["shape"][:][::-1]
-                )
+                    shape=g["shape"][:][::-1],
+                ),
             )
             pd.DataFrame(
                 {"gene_symbols": pd.Series(g["gene_names"][:]).astype(str)},
-                index=pd.Index(g["genes"][:]).astype(str) 
+                index=pd.Index(g["genes"][:]).astype(str),
             ).to_pickle(cls.dirpth / "var.pkl.gz")
-            pd.DataFrame(
-                [],
-                index=pd.Index(g["barcodes"][:]).astype(str) 
-            ).to_pickle(cls.dirpth / "obs.pkl.gz")
+            pd.DataFrame([], index=pd.Index(g["barcodes"][:]).astype(str)).to_pickle(
+                cls.dirpth / "obs.pkl.gz"
+            )
 
 
 class ICA_BoneMarrow_Donor1(Dataset):
@@ -66,7 +63,6 @@ class ICA_BoneMarrow_Donor1(Dataset):
         obs = pd.read_pickle(cls.dirpth / "obs.pkl.gz")
         var = pd.read_pickle(cls.dirpth / "var.pkl.gz")
         adata = ad.AnnData(X=mtx, obs=obs, var=var)
-        # adata.var_names_make_unique()
         return adata
 
     @classmethod
@@ -80,21 +76,15 @@ class ICA_BoneMarrow_Donor1(Dataset):
             adata = ad.AnnData(
                 X=sparse.csr_matrix(
                     (g["data"][:], g["indices"][:], g["indptr"][:]),
-                    shape=g["shape"][:][::-1]
+                    shape=g["shape"][:][::-1],
                 ),
-                obs=pd.DataFrame(
-                    [],
-                    index=pd.Index(g["barcodes"][:]).astype(str)
-                ),
+                obs=pd.DataFrame([], index=pd.Index(g["barcodes"][:]).astype(str)),
                 var=pd.DataFrame(
                     {"gene_symbols": pd.Series(g["gene_names"][:]).astype(str)},
-                    index=pd.Index(g["genes"][:]).astype(str)
-                )
+                    index=pd.Index(g["genes"][:]).astype(str),
+                ),
             )
             subset = adata[adata.obs_names.str.contains("BM1"), :].copy()
-            save_sparse(
-                cls.dirpth / "mtx.h5",
-                subset.X
-            )
+            save_sparse(cls.dirpth / "mtx.h5", subset.X)
             subset.var.to_pickle(cls.dirpth / "var.pkl.gz")
             subset.obs.to_pickle(cls.dirpth / "obs.pkl.gz")
