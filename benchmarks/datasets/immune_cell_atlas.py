@@ -1,13 +1,11 @@
-from pathlib import Path
-
 import anndata as ad
 import h5py
 import pandas as pd
 from scipy import sparse
 
 from .utils import Dataset, download, save_sparse, load_sparse
+from . import DATASETS_PATH
 
-DATASETS_PATH = Path(__file__).parent
 BM_PATH = DATASETS_PATH / "data/raw/ica_bone_marrow_h5.h5"
 
 
@@ -45,10 +43,10 @@ class ICA_BoneMarrow_full(Dataset):
                 ),
             )
             pd.DataFrame(
-                {"gene_symbols": pd.Series(g["gene_names"][:]).astype(str)},
+                {"gene_symbols": g["gene_names"][:].astype(str)},
                 index=pd.Index(g["genes"][:]).astype(str),
             ).to_pickle(cls.dirpth / "var.pkl.gz")
-            pd.DataFrame([], index=pd.Index(g["barcodes"][:]).astype(str)).to_pickle(
+            pd.DataFrame([], index=pd.Index(g["barcodes"][:].astype(str))).to_pickle(
                 cls.dirpth / "obs.pkl.gz"
             )
 
@@ -80,7 +78,7 @@ class ICA_BoneMarrow_Donor1(Dataset):
                 ),
                 obs=pd.DataFrame([], index=pd.Index(g["barcodes"][:]).astype(str)),
                 var=pd.DataFrame(
-                    {"gene_symbols": pd.Series(g["gene_names"][:]).astype(str)},
+                    {"gene_symbols": g["gene_names"][:].astype(str)},
                     index=pd.Index(g["genes"][:]).astype(str),
                 ),
             )

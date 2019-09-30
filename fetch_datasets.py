@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent))
 
-from benchmarks.datasets import datasets
+from benchmarks.datasets import DATASETS
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
     args = parser.parse_args()
     pat = re.compile(args.pattern)
 
-    for dataset in datasets:
+    for dataset in DATASETS:
         if pat.match(dataset.name) is None:
             continue
         else:
