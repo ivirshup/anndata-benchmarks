@@ -6,6 +6,12 @@ This repo contains some work in progress benchmarks for [AnnData](https://github
 
 I definitley recommend reading through the asv docs. Currently, this assumes the benchmark suite can reach the `anndata` repo via the path `../anndata`. Otherwise, all you'll need to do is create a [machine file](https://asv.readthedocs.io/en/stable/commands.html#asv-machine) for your system and make sure `anndata`s dependencies are installable via `conda`.
 
+### Data
+
+Data will need to be retrieved for these benchmarks. Currently this is can be done via the script `fetch_datasets.py`. This downloads and caches some files for each dataset. The set of datasets retrieved can be limited via the `--pattern` argument.
+
+Note that the `h5ad` format has changed since it's inception. While the `anndata` package maintains backwards compatability, older versions of `anndata` will not be able to read files written by more recent versions. To get around this for the benchmarks, datasets have to be able to be read by all versions which can require a setup function that creates the anndata object.
+
 ## Usage
 
 ### Runnings the benchmarks:
