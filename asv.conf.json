@@ -73,13 +73,17 @@
     //
     "matrix": {
         "numpy": [""],
-        "scipy": ["1.2", ""],
+        // "scipy": ["1.2", ""],
+        "scipy": [""],
         "h5py": [""],
         "natsort": [""],
         "pandas": [""],
         "memory_profiler": [""],
         "zarr": [""],
-        "setuptools_scm": [""]
+        "setuptools_scm": [""],
+        "flit": [""],
+        "pytoml": [""],
+        "pytest": [""],
         // "scanpy": [""],
         // "psutil": [""]
     },

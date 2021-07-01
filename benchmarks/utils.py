@@ -6,12 +6,14 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 
+import anndata
 from anndata import AnnData
 
 
 def get_anndata_memsize(adata):
     recording = memory_usage(
-        (sedate(adata.copy, naplength=0.005), (adata,)), interval=0.001)
+        (sedate(adata.copy, naplength=0.005), (adata,)), interval=0.001
+    )
     diff = recording[-1] - recording[0]
     return diff
 
@@ -22,28 +24,39 @@ def get_peak_mem(op, interval=0.001):
 
 
 def sedate(func, naplength=0.05):
-    """Make a function sleepy, so we can sample the start and end state.
-    """
+    """Make a function sleepy, so we can sample the start and end state."""
+
     def wrapped_function(*args, **kwargs):
         sleep(naplength)
         val = func(*args, **kwargs)
         sleep(naplength)
         return val
+
     return wrapped_function
+
 
 # TODO: Factor out the time it takes to generate these
 
 
 def gen_indexer(adata, dim, index_kind, ratio):
     dimnames = ("obs", "var")
+    index_kinds = {"slice", "intarray", "boolarray", "strarray"}
+
+    if index_kind not in index_kinds:
+        raise ValueError(
+            f"Argument 'index_kind' must be one of {index_kinds}. Was {index_kind}."
+        )
+
     axis = dimnames.index(dim)
     subset = [slice(None), slice(None)]
     axis_size = adata.shape[axis]
+
     if index_kind == "slice":
         subset[axis] = slice(0, int(np.round(axis_size * ratio)))
     elif index_kind == "intarray":
         subset[axis] = np.random.choice(
-            np.arange(axis_size), int(np.round(axis_size * ratio)), replace=False)
+            np.arange(axis_size), int(np.round(axis_size * ratio)), replace=False
+        )
         subset[axis].sort()
     elif index_kind == "boolarray":
         pos = np.random.choice(
@@ -54,23 +67,21 @@ def gen_indexer(adata, dim, index_kind, ratio):
         subset[axis] = a
     elif index_kind == "strarray":
         subset[axis] = np.random.choice(
-            getattr(adata, dim).index,
-            int(np.round(axis_size * ratio)),
-            replace=False
+            getattr(adata, dim).index, int(np.round(axis_size * ratio)), replace=False
         )
     else:
         raise ValueError()
     return tuple(subset)
 
 
-def take_view(adata, *, dim, index_kind, ratio=.5, nviews=100):
+def take_view(adata, *, dim, index_kind, ratio=0.5, nviews=100):
     subset = gen_indexer(adata, dim, index_kind, ratio)
     views = []
     for i in range(nviews):
         views.append(adata[subset])
 
 
-def take_repeated_view(adata, *, dim, index_kind, ratio=.9, nviews=10):
+def take_repeated_view(adata, *, dim, index_kind, ratio=0.9, nviews=10):
     v = adata
     views = []
     for i in range(nviews):
@@ -92,10 +103,10 @@ def gen_adata(n_obs, n_var, attr_set):
     if "obs,var" in attr_set:
         adata.obs = pd.DataFrame(
             {k: np.random.randint(0, 100, n_obs) for k in ascii_lowercase},
-            index=["cell{}".format(i) for i in range(n_obs)]
+            index=["cell{}".format(i) for i in range(n_obs)],
         )
         adata.var = pd.DataFrame(
             {k: np.random.randint(0, 100, n_var) for k in ascii_lowercase},
-            index=["gene{}".format(i) for i in range(n_var)]
+            index=["gene{}".format(i) for i in range(n_var)],
         )
     return adata

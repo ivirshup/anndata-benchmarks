@@ -29,25 +29,21 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 
-from .utils import (
-    get_anndata_memsize,
-    sedate,
-    get_peak_mem
-)
+from .utils import get_anndata_memsize, sedate, get_peak_mem
 from . import datasets
 
 import anndata
 
-PBMC_REDUCED_PATH = "/Users/isaac/github/scanpy/scanpy/datasets/10x_pbmc68k_reduced.h5ad"
+PBMC_REDUCED_PATH = (
+    "/Users/isaac/github/scanpy/scanpy/datasets/10x_pbmc68k_reduced.h5ad"
+)
 PBMC_3K_PATH = "/Users/isaac/data/pbmc3k_raw.h5ad"
 BM_43K_CSR_PATH = Path(__file__).parent.parent / "datasets/BM2_43k-cells.h5ad"
 BM_43K_CSC_PATH = Path(__file__).parent.parent / "datasets/BM2_43k-cells_CSC.h5ad"
 
 
 class H5ADReadSuite:
-    params = (
-        [PBMC_REDUCED_PATH, PBMC_3K_PATH]
-    )
+    params = [PBMC_REDUCED_PATH, PBMC_3K_PATH, BM_43K_CSR_PATH]
     param_names = ["input_path"]
 
     def setup(self, input_path):
@@ -64,11 +60,7 @@ class H5ADReadSuite:
 
     def track_read_full_memratio(self, input_path):
         mem_recording = memory_usage(
-            (
-                sedate(anndata.read_h5ad, .005),
-                (self.filepath,)
-            ),
-            interval=.001
+            (sedate(anndata.read_h5ad, 0.005), (self.filepath,)), interval=0.001
         )
         adata = anndata.read_h5ad(self.filepath)
         base_size = mem_recording[-1] - mem_recording[0]
@@ -84,19 +76,14 @@ class H5ADReadSuite:
 
 
 class H5ADWriteSuite:
-    params = (
-        [PBMC_REDUCED_PATH, PBMC_3K_PATH]
-    )
+    params = [PBMC_REDUCED_PATH, PBMC_3K_PATH, BM_43K_CSR_PATH]
     param_names = ["input_path"]
 
     def setup(self, input_path):
         mem_recording, adata = memory_usage(
-            (
-                sedate(anndata.read_h5ad, .005),
-                (input_path,)
-            ),
+            (sedate(anndata.read_h5ad, 0.005), (input_path,)),
             retval=True,
-            interval=.001
+            interval=0.001,
         )
         self.adata = adata
         self.base_size = mem_recording[-1] - mem_recording[0]
@@ -122,24 +109,20 @@ class H5ADWriteSuite:
         self.adata.write_h5ad(self.writepth, compression="gzip")
 
     def track_peakmem_write_compressed(self, input_path):
-        return get_peak_mem((sedate(self.adata.write_h5ad), (self.writepth,), {"compression": "gzip"}))
+        return get_peak_mem(
+            (sedate(self.adata.write_h5ad), (self.writepth,), {"compression": "gzip"})
+        )
 
 
 class H5ADBackedWriteSuite(H5ADWriteSuite):
-    params = (
-        [PBMC_REDUCED_PATH, PBMC_3K_PATH]
-    )
+    params = [PBMC_REDUCED_PATH, PBMC_3K_PATH]
     param_names = ["input_path"]
 
     def setup(self, input_path):
         mem_recording, adata = memory_usage(
-            (
-                sedate(anndata.read_h5ad, .005),
-                (input_path,),
-                {"backed": "r"}
-            ),
+            (sedate(anndata.read_h5ad, 0.005), (input_path,), {"backed": "r"}),
             retval=True,
-            interval=.001
+            interval=0.001,
         )
         self.adata = adata
         self.base_size = mem_recording[-1] - mem_recording[0]
@@ -159,10 +142,7 @@ class WriteSparseAsDense:
 
     def setup_cache(self):
         base_path = Path(".")
-        fmt_map = {
-            "csc": sparse.csc_matrix,
-            "csr": sparse.csr_matrix
-        }
+        fmt_map = {"csc": sparse.csc_matrix, "csr": sparse.csr_matrix}
         cache_map = {}
         for dataset in self.params[0]:
             orig = dataset.load()
@@ -186,13 +166,10 @@ class WriteSparseAsDense:
         self.adata.write_h5ad("./dense.h5ad", force_dense=True)
 
 
-class ReadBackedSparse:
+class ReadBackedX:
     timeout = 300
 
-    params = (
-        datasets.list_available(),
-        ["csr", "csc"]
-    )
+    params = (datasets.list_available(), ["csr", "csc", "dense"])
     param_names = ["dataset", "mtx_fmt"]
 
     def setup_cache(self):
@@ -202,9 +179,17 @@ class ReadBackedSparse:
         cols = {}
         fmt_map = {
             "csc": sparse.csc_matrix,
-            "csr": sparse.csr_matrix
+            "csr": sparse.csr_matrix,
+            "dense": sparse.csr_matrix,
         }
         for dset, mtx_fmt in product(*self.params):
+            if mtx_fmt == "dense":
+                if str(anndata.__version__) < "0.7.0":
+                    dense_kwarg = {"force_dense": True}
+                else:
+                    dense_kwarg = {"as_dense": ("X",)}
+            else:
+                dense_kwarg = {}
             ad_pth = cur_path / f"{dset.name}_{mtx_fmt}.h5ad"
             adata = dset.load()
             justX = anndata.AnnData(
@@ -212,7 +197,7 @@ class ReadBackedSparse:
                 obs=pd.DataFrame([], index=adata.obs_names),
                 var=pd.DataFrame([], index=adata.var_names),
             )
-            justX.write(ad_pth)
+            justX.write_h5ad(ad_pth, **dense_kwarg)
             local_files[(dset.name, mtx_fmt)] = ad_pth
             rs = np.random.RandomState(seed=42)
             rows[(dset.name, mtx_fmt)] = rs.choice(adata.shape[0], 10, replace=False)
@@ -252,11 +237,11 @@ class ReadBackedSparse:
 
     def time_read_many_rows_slice(self, dset, mtx_fmt):
         start = self.rows[0]
-        result = self.adata[start:start+100:2, :].X
+        result = self.adata[start : start + 100 : 2, :].X
 
     def peakmem_read_many_rows_slice(self, dset, mtx_fmt):
         start = self.rows[0]
-        result = self.adata[start:start+100:2, :].X
+        result = self.adata[start : start + 100 : 2, :].X
 
     def time_read_many_cols(self, dset, mtx_fmt):
         result = self.adata[:, self.cols].X
@@ -266,8 +251,8 @@ class ReadBackedSparse:
 
     def time_read_many_cols_slice(self, dset, mtx_fmt):
         start = self.cols[0]
-        result = self.adata[:, start:start+100:2].X
+        result = self.adata[:, start : start + 100 : 2].X
 
     def peakmem_read_many_cols_slice(self, dset, mtx_fmt):
         start = self.cols[0]
-        result = self.adata[:, start:start+100:2].X
+        result = self.adata[:, start : start + 100 : 2].X
