@@ -77,8 +77,9 @@
         "memory_profiler": [""],
         "zarr": [""],
         "pytest": [""],
+        "dask": [""],
         // "scanpy": [""],
-        // "psutil": [""]
+        // "psutil": [""],
     },
 
     // Combinations of libraries/python versions can be excluded/included
