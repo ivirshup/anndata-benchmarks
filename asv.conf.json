@@ -11,7 +11,7 @@
 
     // The URL or local path of the source code repository for the
     // project being benchmarked
-    "repo": "../anndata",
+    "repo": "https://github.com/scverse/anndata.git",
 
     // The Python project's subdirectory in your repo.  If missing or
     // the empty string, the project is assumed to be located at the root
@@ -23,15 +23,10 @@
     //
     // "install_command": ["python -mpip install {wheel_file}"],
     // "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
-    // "build_command": [
-    //     "python setup.py build",
-    //     "PIP_NO_BUILD_ISOLATION=false python -mpip wheel --no-deps --no-index -w {build_cache_dir} {build_dir}"
-    // ],
+    "build_command": ["python -mbuild --wheel -o {build_cache_dir}"],
 
-    // List of branches to benchmark. If not provided, defaults to "master"
-    // (for git) or "default" (for mercurial).
-    "branches": ["master"], // for git
-    // "branches": ["default"],    // for mercurial
+    // List of branches to benchmark.
+    "branches": ["main"], // for git
 
     // The DVCS being used.  If not set, it will be automatically
     // determined from "repo" by looking at the protocol in the URL
@@ -72,6 +67,7 @@
     // followed by the pip installed packages).
     //
     "matrix": {
+        "build": [""], // build tool
         "numpy": [""],
         // "scipy": ["1.2", ""],
         "scipy": [""],
@@ -80,12 +76,10 @@
         "pandas": [""],
         "memory_profiler": [""],
         "zarr": [""],
-        "setuptools_scm": [""],
-        "flit": [""],
-        "pytoml": [""],
         "pytest": [""],
+        "dask": [""],
         // "scanpy": [""],
-        // "psutil": [""]
+        // "psutil": [""],
     },
 
     // Combinations of libraries/python versions can be excluded/included

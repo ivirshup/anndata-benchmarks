@@ -4,7 +4,7 @@ This repo contains some work in progress benchmarks for [AnnData](https://github
 
 ## Setup
 
-I definitley recommend reading through the asv docs. Currently, this assumes the benchmark suite can reach the `anndata` repo via the path `../anndata`. Otherwise, all you'll need to do is create a [machine file](https://asv.readthedocs.io/en/stable/commands.html#asv-machine) for your system and make sure `anndata`s dependencies are installable via `conda`.
+I definitley recommend reading through the asv docs. Otherwise, all you'll need to do is create a [machine file](https://asv.readthedocs.io/en/stable/commands.html#asv-machine) for your system and make sure `anndata`s dependencies are installable via `conda`.
 
 ### Data
 
