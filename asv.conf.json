@@ -23,7 +23,7 @@
     //
     // "install_command": ["python -mpip install {wheel_file}"],
     // "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
-    "build_command": ["pyproject-build"],
+    "build_command": ["python -mbuild --wheel -o {build_cache_dir}"],
 
     // List of branches to benchmark.
     "branches": ["main"], // for git
@@ -67,6 +67,7 @@
     // followed by the pip installed packages).
     //
     "matrix": {
+        "build": [""], // build tool
         "numpy": [""],
         // "scipy": ["1.2", ""],
         "scipy": [""],
