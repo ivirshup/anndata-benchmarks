@@ -76,9 +76,6 @@
         "pandas": [""],
         "memory_profiler": [""],
         "zarr": [""],
-        "setuptools_scm": [""],
-        "flit": [""],
-        "pytoml": [""],
         "pytest": [""],
         // "scanpy": [""],
         // "psutil": [""]
